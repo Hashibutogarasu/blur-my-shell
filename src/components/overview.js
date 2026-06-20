@@ -5,6 +5,7 @@ import { WorkspaceAnimationController } from 'resource:///org/gnome/shell/ui/wor
 const wac_proto = WorkspaceAnimationController.prototype;
 
 import { Pipeline } from '../conveniences/pipeline.js';
+import { HidamariCompatibility } from '../conveniences/hidamari_compatibility.js';
 
 const OVERVIEW_COMPONENTS_STYLE = [
     "overview-components-light",
@@ -28,6 +29,10 @@ export const OverviewBlur = class OverviewBlur {
         );
         this.enabled = false;
         this.proto_patched = false;
+        this._hidamari_compat = new HidamariCompatibility(
+            is_playing => this._on_hidamari_playing_changed(is_playing),
+            str => this._warn(str)
+        );
     }
 
     enable() {
@@ -144,6 +149,9 @@ export const OverviewBlur = class OverviewBlur {
             this.proto_patched = true;
         }
 
+        if (this.settings.hidamari.COMPATIBILITY)
+            this._hidamari_compat.enable();
+
         this.enabled = true;
     }
 
@@ -220,6 +228,8 @@ export const OverviewBlur = class OverviewBlur {
     disable() {
         this._log("removing blur from overview");
 
+        this._hidamari_compat.disable();
+
         this.remove_background_actors();
         Main.uiGroup.remove_style_class_name("blurred-overview");
         OVERVIEW_COMPONENTS_STYLE.forEach(
@@ -228,6 +238,23 @@ export const OverviewBlur = class OverviewBlur {
 
         this.connections.disconnect_all();
         this.enabled = false;
+    }
+
+    update_hidamari_compatibility() {
+        this._hidamari_compat.disable();
+        if (this.settings.hidamari.COMPATIBILITY)
+            this._hidamari_compat.enable();
+    }
+
+    _on_hidamari_playing_changed(is_playing) {
+        this.overview_background_managers.forEach(bg_manager => {
+            if (bg_manager._bms_pipeline.actor)
+                bg_manager._bms_pipeline.actor.visible = !is_playing;
+        });
+        this.animation_background_managers.forEach(bg_manager => {
+            if (bg_manager._bms_pipeline.actor)
+                bg_manager._bms_pipeline.actor.visible = !is_playing;
+        });
     }
 
     restore_patched_proto() {

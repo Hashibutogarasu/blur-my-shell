@@ -628,6 +628,8 @@ export default class BlurMyShell extends Extension {
         this._settings.hidamari.COMPATIBILITY_changed(() => {
             if (this._settings.panel.BLUR)
                 this._panel_blur.update_hidamari_compatibility();
+            if (this._settings.overview.BLUR)
+                this._overview_blur.update_hidamari_compatibility();
         });
 
 

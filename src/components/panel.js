@@ -30,7 +30,7 @@ export const PanelBlur = class PanelBlur {
         this.actors_list = [];
         this.enabled = false;
         this._hidamari_compat = new HidamariCompatibility(
-            mode => this._set_blur_mode(mode),
+            is_playing => this._on_hidamari_playing_changed(is_playing),
             str => this._warn(str)
         );
     }
@@ -615,13 +615,9 @@ export const PanelBlur = class PanelBlur {
             this._hidamari_compat.enable();
     }
 
-    _set_blur_mode(mode) {
+    _on_hidamari_playing_changed(is_playing) {
         this.actors_list.forEach(actors => {
-            if (!actors.static_blur) {
-                const effect = actors.bg_manager._bms_pipeline.effect;
-                if (effect)
-                    effect.mode = mode;
-            }
+            actors.widgets.background.visible = !is_playing;
         });
     }
 
