@@ -1,0 +1,12 @@
+{
+  "name": "blur-my-shell",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "make build",
+    "install:ext": "make install",
+    "clean": "make clean",
+    "pot": "make pot",
+    "test:shell": "make test-shell",
+    "test:prefs": "make test-prefs"
+  }
+}
