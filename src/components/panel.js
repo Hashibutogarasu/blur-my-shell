@@ -1,5 +1,7 @@
 import St from 'gi://St';
 import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+import Shell from 'gi://Shell';
 import Meta from 'gi://Meta';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
@@ -9,6 +11,15 @@ import { Pipeline } from '../conveniences/pipeline.js';
 import { DummyPipeline } from '../conveniences/dummy_pipeline.js';
 
 const DASH_TO_PANEL_UUID = 'dash-to-panel@jderose9.github.com';
+
+const HIDAMARI_BUS_NAME = 'io.github.jeffshee.Hidamari.server';
+const HIDAMARI_OBJ_PATH = '/';
+const HIDAMARI_IFACE_XML = `
+<node>
+  <interface name='io.github.jeffshee.hidamari.server'>
+    <property name="is_playing" type="b" access="read"/>
+  </interface>
+</node>`;
 const PANEL_STYLES = [
     "transparent-panel",
     "light-panel",
@@ -28,6 +39,9 @@ export const PanelBlur = class PanelBlur {
         this.effects_manager = effects_manager;
         this.actors_list = [];
         this.enabled = false;
+        this._hidamariWatcherId = 0;
+        this._hidamariProxy = null;
+        this._hidamariProxySignalId = 0;
     }
 
     enable() {
@@ -90,6 +104,8 @@ export const PanelBlur = class PanelBlur {
                 });
             }
         })
+
+        this._setup_hidamari_watcher();
 
         this.enabled = true;
     }
@@ -584,6 +600,8 @@ export const PanelBlur = class PanelBlur {
 
         this._log("removing blur from top panel");
 
+        this._teardown_hidamari_watcher();
+
         this.disconnect_from_windows_and_overview();
 
         this.update_light_text_classname(true);
@@ -597,6 +615,80 @@ export const PanelBlur = class PanelBlur {
         this.connections.disconnect_all();
 
         this.enabled = false;
+    }
+
+    _setup_hidamari_watcher() {
+        if (!this.settings.hidamari.COMPATIBILITY)
+            return;
+
+        this._hidamariWatcherId = Gio.DBus.session.watch_name(
+            HIDAMARI_BUS_NAME,
+            Gio.BusNameWatcherFlags.NONE,
+            () => this._on_hidamari_appeared(),
+            () => this._on_hidamari_vanished()
+        );
+    }
+
+    _teardown_hidamari_watcher() {
+        if (this._hidamariWatcherId) {
+            Gio.DBus.session.unwatch_name(this._hidamariWatcherId);
+            this._hidamariWatcherId = 0;
+        }
+        this._teardown_hidamari_proxy();
+        this._set_blur_mode(Shell.BlurMode.BACKGROUND);
+    }
+
+    _on_hidamari_appeared() {
+        try {
+            const HidamariProxy = Gio.DBusProxy.makeProxyWrapper(HIDAMARI_IFACE_XML);
+            this._hidamariProxy = new HidamariProxy(
+                Gio.DBus.session,
+                HIDAMARI_BUS_NAME,
+                HIDAMARI_OBJ_PATH,
+                null,
+                Gio.DBusProxyFlags.DO_NOT_AUTO_START
+            );
+            this._hidamariProxySignalId = this._hidamariProxy.connect(
+                'g-properties-changed',
+                () => this._update_sampler_for_hidamari()
+            );
+            this._update_sampler_for_hidamari();
+        } catch (e) {
+            this._warn(`could not connect to Hidamari DBus: ${e}`);
+        }
+    }
+
+    _on_hidamari_vanished() {
+        this._teardown_hidamari_proxy();
+        this._set_blur_mode(Shell.BlurMode.BACKGROUND);
+    }
+
+    _teardown_hidamari_proxy() {
+        if (this._hidamariProxy) {
+            if (this._hidamariProxySignalId) {
+                this._hidamariProxy.disconnect(this._hidamariProxySignalId);
+                this._hidamariProxySignalId = 0;
+            }
+            this._hidamariProxy = null;
+        }
+    }
+
+    _update_sampler_for_hidamari() {
+        const val = this._hidamariProxy?.get_cached_property('is_playing');
+        const is_playing = val ? val.unpack() : false;
+        this._set_blur_mode(
+            is_playing ? Shell.BlurMode.ACTOR : Shell.BlurMode.BACKGROUND
+        );
+    }
+
+    _set_blur_mode(mode) {
+        this.actors_list.forEach(actors => {
+            if (!actors.static_blur) {
+                const effect = actors.bg_manager._bms_pipeline.effect;
+                if (effect)
+                    effect.mode = mode;
+            }
+        });
     }
 
     _log(str) {

@@ -107,6 +107,7 @@
         <child name='popup' schema='org.gnome.shell.extensions.blur-my-shell.popup'></child>
         <child name='hidetopbar' schema='org.gnome.shell.extensions.blur-my-shell.hidetopbar'></child>
         <child name='dash-to-panel' schema='org.gnome.shell.extensions.blur-my-shell.dash-to-panel'></child>
+        <child name='hidamari' schema='org.gnome.shell.extensions.blur-my-shell.hidamari'></child>
     </schema>
 
     <!-- OVERVIEW -->
@@ -681,6 +682,16 @@
         <key type="b" name="blur-original-panel">
             <default>true</default>
             <summary>Boolean, whether to blur the original panel (if option selected) with Dash to Panel</summary>
+        </key>
+    </schema>
+
+    <!-- HIDAMARI -->
+    <schema id="org.gnome.shell.extensions.blur-my-shell.hidamari"
+        path="/org/gnome/shell/extensions/blur-my-shell/hidamari/">
+        <!-- COMPATIBILITY -->
+        <key type="b" name="compatibility">
+            <default>false</default>
+            <summary>Boolean, whether to dynamically update the blur sampler when Hidamari video wallpaper is playing</summary>
         </key>
     </schema>
 </schemalist>

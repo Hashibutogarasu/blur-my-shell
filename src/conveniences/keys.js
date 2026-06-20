@@ -123,6 +123,11 @@ export const KEYS = [
             { type: Type.B, name: "blur-original-panel" },
         ]
     },
+    {
+        component: "hidamari", schemas: [
+            { type: Type.B, name: "compatibility" },
+        ]
+    },
 ];
 
 

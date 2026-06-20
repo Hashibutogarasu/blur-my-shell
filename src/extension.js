@@ -622,6 +622,17 @@ export default class BlurMyShell extends Extension {
         });
 
 
+        // ---------- HIDAMARI ----------
+
+        // toggled on/off
+        this._settings.hidamari.COMPATIBILITY_changed(() => {
+            if (this._settings.panel.BLUR) {
+                this._panel_blur._teardown_hidamari_watcher();
+                this._panel_blur._setup_hidamari_watcher();
+            }
+        });
+
+
         // ---------- SCREENSHOT ----------
 
         // toggled on/off

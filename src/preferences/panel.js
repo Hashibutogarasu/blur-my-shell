@@ -25,7 +25,8 @@ export const Panel = GObject.registerClass({
         'style_panel',
         'override_background_dynamically',
         'hidetopbar_compatibility',
-        'dtp_blur_original_panel'
+        'dtp_blur_original_panel',
+        'hidamari_compatibility'
     ],
 }, class Panel extends Adw.PreferencesPage {
     constructor(preferences, pipelines_manager, pipelines_page) {
@@ -93,6 +94,10 @@ export const Panel = GObject.registerClass({
         );
         this.preferences.dash_to_panel.settings.bind(
             'blur-original-panel', this._dtp_blur_original_panel, 'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+        this.preferences.hidamari.settings.bind(
+            'compatibility', this._hidamari_compatibility, 'active',
             Gio.SettingsBindFlags.DEFAULT
         );
     }

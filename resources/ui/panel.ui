@@ -239,6 +239,20 @@ Recommended unless you want to customize your GNOME theme.</property>
             </child>
           </object>
         </child>
+
+        <child>
+          <object class="AdwActionRow">
+            <property name="title" translatable="yes">Hidamari video wallpaper</property>
+            <property name="subtitle" translatable="yes">Dynamically updates the blur sampler when the video wallpaper is playing.</property>
+            <property name="activatable-widget">hidamari_compatibility</property>
+
+            <child>
+              <object class="GtkSwitch" id="hidamari_compatibility">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
       </object>
     </child>
   </template>
